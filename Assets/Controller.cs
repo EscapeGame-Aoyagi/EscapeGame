@@ -7,7 +7,7 @@ public class Controller : MonoBehaviour
     float x, z;
     float speed = 0.1f;
 
-    public GameObject cam, light;
+    public GameObject cam, lig;
     Quaternion cameraRot, characterRot;
     float Xsensityvity = 3f, Ysensityvity = 3f;
     
@@ -36,7 +36,7 @@ public class Controller : MonoBehaviour
         cameraRot = ClampRotation(cameraRot);
 
         cam.transform.localRotation = cameraRot;
-        light.transform.localRotation = cameraRot;
+        lig.transform.localRotation = cameraRot;
         transform.localRotation = characterRot;
 
 
