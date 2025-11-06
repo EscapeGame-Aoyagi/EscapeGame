@@ -1,102 +1,85 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class Controller : MonoBehaviour
 {
-    float x, z;
-    float speed = 0.1f;
+    float inputX, inputZ;
+    [SerializeField] float moveSpeed = 3.5f;
+    [SerializeField] Transform cam, lig;
 
-    public GameObject cam, lig;
-    Quaternion cameraRot, characterRot;
-    float Xsensityvity = 3f, Ysensityvity = 3f;
-    
+    float yaw;   // 水平回転（左右）
+    float pitch; // 垂直回転（上下）
+    [SerializeField] float sensitivityX = 120f; // deg/sec（水平）
+    [SerializeField] float sensitivityY = 120f; // deg/sec（垂直）
+    [SerializeField] float minPitch = -90f, maxPitch = 90f;
+
     bool cursorLock = true;
 
-    //変数の宣言(角度の制限用)
-    float minX = -90f, maxX = 90f;
-
-    // Start is called before the first frame update
     void Start()
     {
-        cameraRot = cam.transform.localRotation;
-        characterRot = transform.localRotation;
+        if (cam == null) Debug.LogError("cam未割り当て");
+        if (lig == null) Debug.LogWarning("lig未割り当て");
+
+        var rot = transform.localRotation.eulerAngles;
+        yaw = rot.y;
+        pitch = cam != null ? cam.localRotation.eulerAngles.x : 0f;
+
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 
-    // Update is called once per frame
     void Update()
     {
-        float xRot = Input.GetAxis("Mouse X") * Ysensityvity;
-        float yRot = Input.GetAxis("Mouse Y") * Xsensityvity;
+        // --- 視点回転（フレーム非依存） ---
+        float mx = Input.GetAxis("Mouse X");
+        float my = Input.GetAxis("Mouse Y");
 
-        cameraRot *= Quaternion.Euler(-yRot, 0, 0);
-        characterRot *= Quaternion.Euler(0, xRot, 0);
+        yaw   += mx * sensitivityX * Time.deltaTime;
+        pitch -= my * sensitivityY * Time.deltaTime;
+        pitch = Mathf.Clamp(pitch, minPitch, maxPitch);
 
-        //Updateの中で作成した関数を呼ぶ
-        cameraRot = ClampRotation(cameraRot);
+        transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
+        if (cam != null)
+        {
+            cam.localRotation = Quaternion.Euler(pitch, 0f, 0f);
+        }
+        if (lig != null)
+        {
+            lig.localRotation = Quaternion.Euler(pitch, 0f, 0f);
+        }
 
-        cam.transform.localRotation = cameraRot;
-        lig.transform.localRotation = cameraRot;
-        transform.localRotation = characterRot;
-
+        // --- 入力はUpdateで読む ---
+        inputX = Input.GetAxisRaw("Horizontal");
+        inputZ = Input.GetAxisRaw("Vertical");
 
         UpdateCursorLock();
     }
 
-    private void FixedUpdate()
+    void FixedUpdate()
     {
-        x = 0;
-        z = 0;
+        // --- 水平面に投影して移動（フレーム非依存） ---
+        if (cam == null) return;
 
-        x = Input.GetAxisRaw("Horizontal") * speed;
-        z = Input.GetAxisRaw("Vertical") * speed;
+        Vector3 fwd = Vector3.ProjectOnPlane(cam.forward, Vector3.up).normalized;
+        Vector3 right = Vector3.ProjectOnPlane(cam.right, Vector3.up).normalized;
 
-        //transform.position += new Vector3(x,0,z);
-
-        transform.position += cam.transform.forward * z + cam.transform.right * x;
+        Vector3 vel = (fwd * inputZ + right * inputX).normalized * moveSpeed;
+        transform.position += vel * Time.fixedDeltaTime; // ※壁抜け対策はCharacterController推奨
     }
 
-
-    public void UpdateCursorLock()
+    void UpdateCursorLock()
     {
-        if(Input.GetKeyDown(KeyCode.Escape))
-        {
-            cursorLock = false;
-        }
-        else if(Input.GetMouseButton(0))
-        {
-            cursorLock = true;
-        }
-
+        if (Input.GetKeyDown(KeyCode.Escape)) cursorLock = false;
+        else if (Input.GetMouseButton(0))     cursorLock = true;
 
         if (cursorLock)
         {
             Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
         }
-        else if(!cursorLock)
+        else
         {
             Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
         }
     }
-    
-    //角度制限関数の作成
-    public Quaternion ClampRotation(Quaternion q)
-    {
-        //q = x,y,z,w (x,y,zはベクトル（量と向き）：wはスカラー（座標とは無関係の量）)
-
-        q.x /= q.w;
-        q.y /= q.w;
-        q.z /= q.w;
-        q.w = 1f;
-
-        float angleX = Mathf.Atan(q.x) * Mathf.Rad2Deg * 2f;
-
-        angleX = Mathf.Clamp(angleX,minX,maxX);
-
-        q.x = Mathf.Tan(angleX * Mathf.Deg2Rad * 0.5f);
-
-        return q;
-    }
-
-
 }

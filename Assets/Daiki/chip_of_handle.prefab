@@ -93,6 +93,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   scoreValue: 1
+  collectSound: {fileID: 8300000, guid: 93bd1f028c5719e4ba45a2a7be70b21d, type: 3}
 --- !u!65 &-8852494423666522184
 BoxCollider:
   m_ObjectHideFlags: 0
