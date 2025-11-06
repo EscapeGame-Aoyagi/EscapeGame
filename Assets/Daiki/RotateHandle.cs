@@ -22,7 +22,7 @@ public class InteractRotateAndFill : MonoBehaviour
     public float fadeDuration = 3.0f;          // 透明→黒 にかける時間
     public float delayBeforeScore = 4.0f;      // フェード完了（真っ黒）からスコア表示までの遅延
     public KeyCode continueKey = KeyCode.Return;
-    public string scoreFormat = "Score: {0}\n\nPress Enter";
+    public string scoreFormat = "Time: {0}\n\nPress Enter";
 
     [Header("Scene")]
     public string nextSceneName = "NextScene";
@@ -35,7 +35,7 @@ public class InteractRotateAndFill : MonoBehaviour
 
     private float progress = 0f;
     private bool completed = false;
-    private ScoreManager scoreManager;
+    private ScoreManagerScript scoreManager;
 
     void Start()
     {
@@ -66,7 +66,7 @@ public class InteractRotateAndFill : MonoBehaviour
 
         if (scoreText != null) scoreText.gameObject.SetActive(false);
 
-        scoreManager = FindObjectOfType<ScoreManager>();
+        scoreManager = FindObjectOfType<ScoreManagerScript>();
         if (scoreManager == null)
             Debug.LogWarning("ScoreManager がシーン内に見つかりません。");
     }
@@ -77,7 +77,7 @@ public class InteractRotateAndFill : MonoBehaviour
 
         float distance = Vector3.Distance(player.position, transform.position);
         bool isInRange = distance <= interactRange;
-        bool hasEnoughScore = (scoreManager != null && ScoreManager.score >= 4);
+        bool hasEnoughScore = (scoreManager != null && ScoreManagerScript.score >= 4);
 
         // 範囲外 → テキストもスライダーも完全非表示
         if (!isInRange)
@@ -92,7 +92,7 @@ public class InteractRotateAndFill : MonoBehaviour
         {
             promptText.gameObject.SetActive(true);
             promptText.text = hasEnoughScore ? "Eを押してハンドルを回す"
-                                             : "スコアが足りません (4以上で操作可能)";
+                                             : "ハンドルがありません";
         }
 
         // ゲージ表示（範囲内・操作可能時。進み始めたら表示維持）
@@ -104,9 +104,9 @@ public class InteractRotateAndFill : MonoBehaviour
         // E長押しで回転＆ゲージ増加
         if (Input.GetKey(interactKey))
         {
-            transform.Rotate(Vector3.up, rotationSpeed * Time.deltaTime, Space.Self);
+            transform.parent.Rotate(Vector3.forward, rotationSpeed * Time.deltaTime, Space.Self);
 
-            progress += fillSpeedPerSec * Time.deltaTime;
+            progress += fillSpeedPerSec * Time.deltaTime / 3;
             progress = Mathf.Clamp01(progress);
             if (progressSlider != null) progressSlider.value = progress;
 
@@ -115,7 +115,7 @@ public class InteractRotateAndFill : MonoBehaviour
             {
                 completed = true;
 
-                // ① 指定オブジェクトを即時に消す
+                // 指定オブジェクトを即時に消す
                 if (targetToHide != null)
                 {
                     if (destroyTarget) Destroy(targetToHide);
@@ -126,7 +126,7 @@ public class InteractRotateAndFill : MonoBehaviour
                 if (promptText != null) promptText.gameObject.SetActive(false);
                 if (progressSlider != null) progressSlider.gameObject.SetActive(false);
 
-                // ② 完了フロー開始（透明→黒フェード → 待機 → スコア表示 → Enterで遷移）
+                // 完了フロー開始（透明→黒フェード → 待機 → スコア表示 → Enterで遷移）
                 StartCoroutine(HandleCompletionFlow());
             }
         }
@@ -163,8 +163,8 @@ public class InteractRotateAndFill : MonoBehaviour
 
         if (scoreText != null)
         {
-            int shownScore = (scoreManager != null) ? ScoreManager.score : 0;
-            scoreText.text = string.Format(scoreFormat, shownScore);
+            float shownScore = scoreManager.GetTimeScore();
+            scoreText.text = string.Format(scoreFormat, (int)shownScore);
             scoreText.gameObject.SetActive(true);
         }
 

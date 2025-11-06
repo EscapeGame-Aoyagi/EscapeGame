@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-public class ScoreManager : MonoBehaviour
+public class ScoreManagerScript : MonoBehaviour
 {
     // ====== スコア関連 ======
     public static int score = 0;        // ハンドルの欠片スコア（共有用）
@@ -10,7 +10,7 @@ public class ScoreManager : MonoBehaviour
     private MeshRenderer mr;            // ハンドルの表示制御用
 
     // ====== タイマー関連 ======
-    private float elapsedTime = 0f;     // 経過時間（カウントアップ）
+    public float elapsedTime = 0f;     // 経過時間（カウントアップ）
     private bool timerRunning = true;   // タイマーの動作フラグ
 
     void Start()

@@ -10,7 +10,7 @@ public class CollectibleObject : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             // スコア加算
-            FindObjectOfType<ScoreManager>().AddScore(scoreValue);
+            FindObjectOfType<ScoreManagerScript>().AddScore(scoreValue);
 
             // このオブジェクトを削除
             Destroy(gameObject);
